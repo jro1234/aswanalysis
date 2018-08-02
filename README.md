@@ -18,5 +18,5 @@ that examine and compare all the data.
 
 0. Create Data (outside this package)
 1. Dataset Configuration
-2. [Create modified version of analyze.py]
-3. Run analyze.py for dataset
+2. [Create modified version of `analyze.py`]
+3. Run `analyze.py` for dataset
