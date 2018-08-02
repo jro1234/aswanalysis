@@ -1,6 +1,6 @@
-# as_analysis
+# aswanalysis
 
-Analyze Adaptive Sampling Results
+Analyze Adaptive Sampling Workflow Results
 
 
 This package contains routines to co-process different simulation workflows. Say you have a long, single
