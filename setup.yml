@@ -1,0 +1,45 @@
+name    : aswanalysis
+authors : John Ossyra
+emails  : jossyra@vols.utk.edu
+
+description : "Co-process MD simulation datasets from same biomolecule using MSMs"
+
+classifiers : |
+  Development Status :: 3 - Alpha
+  Intended Audience :: Science/Research
+  Intended Audience :: Developers
+  License :: OSI Approved :: GNU Lesser General
+  Public License v2.1 or later (LGPLv2.1+)
+  Programming Language :: Python
+  Programming Language :: Python :: 2
+  Topic :: Scientific/Engineering :: Bio-Informatics
+  Topic :: Scientific/Engineering :: Chemistry
+  Operating System :: POSIX
+  Operating System :: Unix
+
+download_url : https://github.com/jrossyra/aswanalysis
+url     : https://github.com/jrossyra/aswanalysis
+
+packages:
+  - aswanalysis
+
+platforms:
+  - Linux
+
+released: false
+
+scripts:
+  - aswanalysis/scripts/analyze.py
+
+install_requires:
+  - pyemma
+  #- mdtraj
+  #- numpy
+  #- matplotlib
+
+#include_package_data: true
+#package_data:
+
+
+license: LGPL 2.1 or later
+license_file: LICENSE
