@@ -3,6 +3,10 @@ authors : John Ossyra
 emails  : jossyra@vols.utk.edu
 
 description : "Co-process MD simulation datasets from same biomolecule using MSMs"
+long_description : |
+  aswanalysis is meant to help automate the process of creating MSMs from MD
+  simulations using the same feature descriptions for analysis in multiple
+  datasets. Individual and joint 'master' models can be used to do comparisons.
 
 classifiers : |
   Development Status :: 3 - Alpha
@@ -18,10 +22,11 @@ classifiers : |
   Operating System :: Unix
 
 download_url : https://github.com/jrossyra/aswanalysis
-url     : https://github.com/jrossyra/aswanalysis
+url          : https://github.com/jrossyra/aswanalysis
 
 packages:
   - aswanalysis
+  - aswanalysis.aswtools
 
 platforms:
   - Linux
@@ -37,9 +42,10 @@ install_requires:
   #- numpy
   #- matplotlib
 
-#include_package_data: true
-#package_data:
-
+include_package_data: true
+package_data :
+#  aswanalysis:
+#    - aswanalysis/scripts/analyze.py
 
 license: LGPL 2.1 or later
 license_file: LICENSE

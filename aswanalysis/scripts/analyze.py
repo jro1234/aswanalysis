@@ -12,8 +12,10 @@ pyemma.config.show_progress_bars=False
 import matplotlib
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
-from dprocesstools import process_tools
+
+from aswanalysis import aswtools
 from datasets import datasets_chignolin_test as dcfg
+
 #  # THESE GUYS COME ALONG FROM
 #  # DATASETS_CFG import above
 # TODO promotion lines on import to top registry
