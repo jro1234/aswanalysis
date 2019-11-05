@@ -1,5 +1,6 @@
-from __future__ import print_function
+
 import subprocess, shlex
+import sys
 import os
 from glob import glob
 
@@ -112,7 +113,7 @@ def apply_feat_part(featurizer, parts):
                      **kwargs)
 
     elif isinstance(parts, (list, tuple)):
-        return [apply_feat_part(feat, q)
+        return [apply_feat_part(featurizer, q)
                 for q in parts]
     else:
         return parts
@@ -169,7 +170,7 @@ def prepare_data(dataset, analysis, topdir):
     #      to accommodate call signature changes
     #      to downstream functions
     # NOW starting to process data
-    create_trajlist     (dataset, topdir)
+    create_trajlist     (dataset)
     assign_stride       (dataset)# add namekey
     determine_epochsize (dataset)
     determine_datashape (dataset, analysis)
@@ -226,6 +227,8 @@ def get_traj(func, trajfiles, topfile=None, stride=1):
 def prep_rmsd_calc(traj, ref=None, selection='', precentered=False, parallel=True):
     if not ref:
         ref = traj
+    elif isinstance(ref, str):
+        ref = mdtraj.load(ref)
     kwargs_rmsd = dict()
     kwargs_rmsd['precentered'] = precentered
     kwargs_rmsd['parallel']    = parallel
@@ -637,21 +640,27 @@ def create_trajlist(datasets, topdir='.', sortkey=None, filterkey=None, minimum_
       - trajlist  - `list` for storing paths to trajectory files
     '''
     assert isinstance(minimum_filesize, int)
+    assert os.path.exists(topdir)
+
     if sortkey:
         assert callable(sortkey)
+
     if filterkey:
         assert callable(filterkey)
-    assert os.path.exists(topdir)
+
     for nm, pars in onlydatas(datasets).items():
+
         filenames = os.path.join(topdir, pars['directory'], pars['filename'])
         first     = pars.get('first', 0)
         last      = pars.get('last', None)
         trajfiles = glob(filenames)
         if filterkey:
             trajfiles = filter(filterkey, trajfiles)
+
         pars['trajfiles'] = list(filter(
                 lambda fname: os.stat(fname).st_size > minimum_filesize,
-                sorted(trajfiles, key=sortkey)[first:last]))
+                sorted(trajfiles, key=sortkey)[first:last]
+        ))
 
 
 # TODO FIXME this probably misses trajectories if they are under
@@ -751,7 +760,7 @@ def determine_datashape(datasets, analysis=None, topdir='.',
                     topdir,
                     pars['directory'],
                     pars['topfile'].split('.pdb')[0]+fntag+'.atoms.idx')
-            print("\n --- Now using this atom index file ", f_topo_atomselection)
+            #print("\n --- Now using this atom index file ", f_topo_atomselection)
             pars['topfile_atoms'] = all_topofile
 
         while not done:
@@ -762,9 +771,9 @@ def determine_datashape(datasets, analysis=None, topdir='.',
                 lengths = list()
                 for i in range(pars['n_trajs']):
                     tfn = pars['trajfiles'][ i + j*pars['n_trajs'] ]  # traj filename
-                    print("LOADING TRAJ FROM:")
-                    print("  --> TRAJFILE: ", tfn)
-                    print("  --> TOPFILE : ", os.path.join(pars['directory'],pars['topfile']))
+                    #print("LOADING TRAJ FROM:")
+                    #print("  --> TRAJFILE: ", tfn)
+                    #print("  --> TOPFILE : ", os.path.join(pars['directory'],pars['topfile']))
                     tot = 0  # total frames in traj
                     tfs = '' # trajectory file atomselected
                     adx = None
@@ -778,9 +787,10 @@ def determine_datashape(datasets, analysis=None, topdir='.',
                                 tfn.split('.dcd')[0], fntag)
 
                         if os.path.exists(tfs): # FIXME assuming prepare complete with 1 check
-                            print("Found existing trajectory with atomselection: ", tfs)
+                            #print("Found existing trajectory with atomselection: ", tfs)
                             #pars['tica_inputs'].append(tfs)
                             #continue
+                            pass
 
                     tfi = mdtraj.iterload(
                             tfn,
@@ -796,7 +806,7 @@ def determine_datashape(datasets, analysis=None, topdir='.',
 
                         if all_topofile:
                             if not os.path.exists(all_topofile):
-                                print("Going to write this topo",segment.atom_slice(adx).topology)
+                                #print("Going to write this topo",segment.atom_slice(adx).topology)
                                 segment.atom_slice(adx)[0].save(all_topofile)
 
                         if maxchunks:
@@ -809,34 +819,36 @@ def determine_datashape(datasets, analysis=None, topdir='.',
                        #     #offset = ( segment.n_frames + offset ) % stride + 1
                        #     segment[::pars['stride']].save(tfs.format(i))
                     lengths.append(tot)
-                    print("added this many frames traj to datashape ", str(tot))
+                    #print("added this many frames traj to datashape ", str(tot))
                     #mdtraj.join([tfs.format(k) for k in range(i)])
                     # dependent on `prepare` and file existence
                     if prepare:
                         if prepare and not os.path.exists(f_topo_atomselection):
-                            print("Creating new atom index file: ", f_topo_atomselection)
-                            print("to print these indices: {}".format(adx))
+                            #print("Creating new atom index file: ", f_topo_atomselection)
+                            #print("to print these indices: {}".format(adx))
                             with open(f_topo_atomselection, 'w') as f:
                                 f.write(format_spacedlist(adx))
 
                         else:
-                            print("Found existing atoms index file: ", f_topo_atomselection)
+                            #print("Found existing atoms index file: ", f_topo_atomselection)
+                            pass
 
                         if not os.path.exists(tfs):
-                            print("using this file to store output atomselection ", tfs)
+                            #print("using this file to store output atomselection ", tfs)
                             subprocess.call(shlex.split(
                                   "mdconvert -o {output_str} -a {selection} -s {stride} {input_str} ".format(
                                   output_str=tfs, stride=pars['stride'], input_str=tfn, selection=f_topo_atomselection)))
 
                         else: # TODO this all messed up, & we shouldn't get here
-                            print("Found already existing output file: ", tfs)
+                            #print("Found already existing output file: ", tfs)
+                            pass
 
                         pars['tica_inputs'].append(tfs)
 
                 datashape.append(lengths)
 
             except IndexError:
-                print("Done reading from set ", nm, "\n")
+                #print("Done reading from set ", nm, "\n")
                 done = True
 
 

@@ -32,8 +32,8 @@ def landscape_creator(XY,):#title='', xlabel='TIC0', ylabel='TIC1'):
     return lambda kwargs: _landscape_plot(XY, **kwargs)
 
 
-def _landscape_plot(XY, title='', xlabel='TIC0', ylabel='TIC1'):
-    fig, ax = pymplots.plot_free_energy(*XY, cmap='hot')
+def _landscape_plot(XY, title='', ax=None, xlabel='TIC0', ylabel='TIC1'):
+    fig, ax = pymplots.plot_free_energy(*XY, ax=ax)# cmap='hot')
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.set_title(title)
