@@ -127,6 +127,8 @@ def prepare_tica_inputs(datasets, topfile, features=None, selection=None, chunks
         topology = topfile
     elif os.path.exists(topfile):
         topology = mdtraj.load(topfile).topology
+    else:
+        print("Cannot find topology file: %s"%topfile)
 
     assert isinstance(topology, mdtraj.Topology)
 

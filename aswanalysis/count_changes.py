@@ -7,12 +7,12 @@ interfaces = [1,4,6,8]
 test_timeseries = [0,0,1,1,1,2,3,4,5,5,5,5,6,6,6,7,8,9,9,9,9,9,9,8,7,8,9,9,9,9,8,7,7,6,6,6,5,5,5,4,3,2,1,2,2,3,4,5,5,5,5,5,4,3,2,1,0,1,2,3,2,1,0,0,0,1,2,3,4,5,5,5]
 
 
-def count_changes(timeseries, interfaces, min_residence=1):
+def count_changes(timeseries, interfaces, min_residence=1, **cc_kwargs):
     #if len(interfaces) == 2:
     if False:
         result = count_changes_2state(timeseries, interfaces, min_residence)
     else:
-        result = count_changes_Nstate(timeseries, interfaces, min_residence)
+        result = count_changes_Nstate(timeseries, interfaces, min_residence, **cc_kwargs)
 
     return result
 
@@ -75,7 +75,7 @@ def dtraj_from_changepoints(transitions, full_length):
     return dtraj
 
 
-def count_changes_Nstate(timeseries, interfaces, min_residence=1):
+def count_changes_Nstate(timeseries, interfaces, min_residence=1, use_initial_entry=True):
     '''
     region    state or interface or transition placement
     1         dimensions in state space
@@ -118,15 +118,21 @@ def count_changes_Nstate(timeseries, interfaces, min_residence=1):
     forward and backward changes into states {N}
     '''
 
-    assert len(interfaces) % 2 == 0 # always even since N is counting num & 1D
+    assert len(interfaces) % 2 == 0 # always even since N states is counting num
+                                    #  & inside a 1D dimension (expecting RMSD)
+                                    # --------------------------------------------
                                     # 2 interfaces per possible transition
-                                    # 1 transition per state
+                                    # 1 transition per state count increment
+                                    # 2 states, 1 transition minimum
 
     assert min_residence >= 1  # residence time
-                                    # before transition "into" state
+                               # before transition "into" state
 
     n_interfaces       = len(interfaces)
     n_states           = int(n_interfaces / 2) + 1
+    #------------------------------------------------#
+    # INIT list of lists to store transition indices #
+    #------------------------------------------------#
     forward_changes    = [list() for _ in range(n_states - 1)]
     backward_changes   = [list() for _ in range(n_states - 1)]
 
@@ -149,21 +155,26 @@ def count_changes_Nstate(timeseries, interfaces, min_residence=1):
         except IndexError:
             return i
 
+    #--------------=====-----------------#
+    # TODO allow arbitrary start state   #
     # Initial counting state cannot be the transition region
     #   - loop breaks with first actual state
     ts             = iter(enumerate(timeseries))
     current_region = assign_current_index(next(ts)[1])
 
     # while in transition region
-    # TODO
     #while current_region in xregion:
     while current_region % 2 == 1:
         current_region = assign_current_index(next(ts)[1])
     else:
         last_region = current_region
         last_state  = current_region
+    # END TODO for arbitrary start state #
+    #--------------=====-----------------#
 
-    # Main loop to count transitions
+    #----------=====-----------------#
+    # Main loop to count transitions #
+    #----------=====-----------------#
     residence_time = -1
     for stepnum, tp in ts:
         current_region = assign_current_index(tp)
@@ -180,24 +191,29 @@ def count_changes_Nstate(timeseries, interfaces, min_residence=1):
                     last_region = current_region
                     residence_time += 1
 
-                # SAME as elif shown
-                #elif current_region == last_region:
                 else:
                     residence_time += 1
 
-                    # OFFICIALLY entered a state
+                    #---------=====--------------#
+                    # OFFICIALLY entered a state #
+                    #=========-----==============#
                     if residence_time >= min_residence:
                         # Forwards if new index is higher
                         forwards   = True if last_state < last_region else False
                         last_state = last_region
                         
-                        # FIXME to track the residence times
+                        if use_initial_entry:
+                            registered_transition_step = stepnum - residence_time
+
+                        else:
+                            registered_transition_step = stepnum
+
                         residence_time = -1
 
                         if forwards:
-                            forward_changes[current_region//2-1].append(stepnum)
+                            forward_changes[current_region//2-1].append(registered_transition_step)
                         else:
-                            backward_changes[current_region//2].append(stepnum)
+                            backward_changes[current_region//2].append(registered_transition_step)
 
             # Residing in state
             else:

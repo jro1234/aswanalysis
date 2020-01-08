@@ -4,13 +4,77 @@ import inspect
 ## No successful use yet
 #from numba import jit
 
-from count_changes import count_changes, dtraj_from_changepoints
+from .count_changes import count_changes, dtraj_from_changepoints
 import pandas
 import numpy as np
+import os
 
 import copy
 
 import pyemma
+
+
+def get_state_trajectories(logs_folder, include=None):
+
+    _state  = ["Step", "Potential Energy (kJ/mole)",
+        "Kinetic Energy (kJ/mole)", "Total Energy (kJ/mole)",
+        "Temperature (K)", "Box Volume (nm^3)",
+        "Density (g/mL)", "Speed (ns/day)"]
+
+    _type  = {k:v for k,v in zip(_state,
+        [int, float, float, float,
+        float, float, float, float]
+    )}
+
+    _statetrajs = list()
+    statetrajs  = dict()
+
+    for f in sorted(logs_folder.iterdir()):
+        print("Reading from file: %s"%f)
+        _statetrajs.append(_parse_logfile(open(f, 'r'), _type))
+
+    for s in _state:
+        statetrajs[s] = np.array(
+            np.concatenate([stj[s] for stj in _statetrajs]),
+            dtype=_type[s],
+        )
+
+    return statetrajs
+
+
+def _parse_logfile(f, types_keys, startkey="#\"Step\""):
+
+    reading = False
+    result  = {k:list() for k in types_keys}
+
+    while not f.closed:
+        try:
+            while not reading:
+                line = next(f)
+                if line.find(startkey) >= 0:
+                    reading = True
+
+            while reading:
+                line = next(f)
+                try:
+                    md_state = line.split()[::2]
+                    assert md_state[0].isdigit()
+                    assert len(md_state) == len(types_keys)
+
+                    [result[k].append(t(s))
+                     for (k,t),s in zip(
+                         types_keys.items(),
+                         md_state)
+                    ]
+
+                except AssertionError or IndexError:
+                    reading = False
+
+        except StopIteration:
+            f.close()
+
+    return result
+
 
 def refined_regspace(data, mindist=1, min_counts=10, **kwargs):
     dmin = kwargs.pop("dmin")
