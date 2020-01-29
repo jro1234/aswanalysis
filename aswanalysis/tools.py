@@ -18,30 +18,82 @@ from pprint import pformat
 
 
 # TODO use logger 
-def get_logger(logname, logfolder=''):
-    import logging
+import os
+import logging
 
-    if logname in {"builtins","__main__"}:
-        import datetime
-        logname = "session.{}".format(
-             datetime.datetime.now().strftime('%m-%d-%y.%H:%M:%S'))
+# FIXME the level handling broke probably
+#       when outer loop changed, refixitup
 
-    loglevel  = logging.INFO
-    logfile   = os.path.join(logfolder, logname+'.log')
+def get_logger(logname, loglevel=None, logfile=False):
+
+    # FIXME maybe... this circles on the name
+    #       'loglevel' if given as argument
+    if loglevel:
+        _loglevel = loglevel
+
+    else:
+        _loglevel = os.environ.get('PAW_LOGLEVEL',"WARNING")
+
+    # catch attempted set values as WARNING level
+    if isinstance(_loglevel, str):
+        if _loglevel.lower() == 'info':
+            loglevel = logging.INFO
+
+        elif _loglevel.lower() == 'debug':
+            loglevel = logging.DEBUG
+
+        elif _loglevel.lower() == 'critical':
+            loglevel = logging.CRITICAL
+
+        elif _loglevel.lower() == 'warning':
+            loglevel = logging.WARNING
+
+        elif _loglevel.lower() == 'error':
+            loglevel = logging.ERROR
+
+        else:
+            print("Could not interpret given loglevel '%s'"%_loglevel)
+            print(" --> Setting PAW loglevel to warning")
+
+            loglevel = logging.WARNING
+
+    else:
+        print("Invalid loglevel input: %s"%_loglevel)
+        print(" --> Setting loglevel to warning")
+
+        loglevel = logging.WARNING
+
     formatter = logging.Formatter(
-        '%(asctime)s :: %(name)s :: %(levelname)s' + \
-        ' :: %(lineno)d |||   %(message)s')
-    logging   . basicConfig(level=loglevel)#, format=formatter)
-    logger    = logging.getLogger(logname)
-    ch        = logging.StreamHandler()#sys.stdout)
-    ch        . setLevel(loglevel)
-    ch        . setFormatter(formatter)
-    fh        = logging.FileHandler(logfile)
-    fh        . setLevel(loglevel)
-    fh        . setFormatter(formatter)
-    logger    . addHandler(ch)
-    logger    . addHandler(fh)
-    logger    . propagate = False
+        "%(asctime)s :: %(name)s :: %(lineno)d :: %(levelname)s || %(message)s"
+    )
+
+    logging.basicConfig(level=loglevel)#, format=formatter)
+    logger  = logging.getLogger(logname)
+
+    ch = logging.StreamHandler()
+    #ch = logging.StreamHandler(sys.stdout)
+    ch.setLevel(loglevel)
+    ch.setFormatter(formatter)
+
+    logger.addHandler(ch)
+
+    if logfile:
+
+        logfilename = 'nopaw'
+
+        if isinstance(logfile, str):
+            logfilename = logfile
+
+        logfile = logfilename + '.' + logname + '.log'
+
+        fh = logging.FileHandler(logfile)
+        fh.setLevel(loglevel)
+        fh.setFormatter(formatter)
+
+        logger.addHandler(fh)
+
+    logger.propagate = False
+
     return logger
 
 

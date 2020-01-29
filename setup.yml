@@ -26,7 +26,7 @@ url          : https://github.com/jrossyra/aswanalysis
 
 packages:
   - aswanalysis
-  - aswanalysis.aswtools
+  - aswanalysis.workflow
 
 platforms:
   - Linux
